@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 
-from .model import Dataset2Vec
+from dataset2vec.model import Dataset2Vec
 
 
 class LightningWrapper(pl.LightningModule):

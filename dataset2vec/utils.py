@@ -45,3 +45,20 @@ def get_preprocessing_pipeline() -> BaseEstimator:
         ]
     ).set_output(transform="pandas")
     return pipeline
+
+
+def is_positive(number: int) -> int:
+    assert number > 0, "Number is non-positive"
+    return number
+
+
+def all_elements_positive(arr: list[int]) -> list[int]:
+    assert all(
+        map(lambda x: x > 0, arr)
+    ), "List contains non-positive elements"
+    return arr
+
+
+def non_empty(arr: list[int]) -> list[int]:
+    assert len(arr) > 0, "List is empty"
+    return arr

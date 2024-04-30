@@ -2,10 +2,10 @@
 set -e
 
 echo "Running black"
-black --line-length=79 dataset2vec/
+black --line-length=79 dataset2vec/ test/
 
 echo "Running mypy"
-mypy --install-types --ignore-missing-imports dataset2vec/
+mypy --install-types --non-interactive --ignore-missing-imports dataset2vec/ test/
 
 echo "Running flake8"
-flake8 dataset2vec/
+flake8 --ignore=W605,W503 dataset2vec/ test/

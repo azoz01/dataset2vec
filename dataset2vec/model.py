@@ -1,104 +1,220 @@
-import torch
-
-from torch import nn
+from torch import mean, nn, stack, Tensor
+from typing import Any, Type
+from dataset2vec.config import Dataset2VecConfig
 
 
 class Dataset2Vec(nn.Module):
-    def __init__(
-        self,
-        activation=nn.ReLU(),
-        f_dense_hidden_size=32,
-        f_res_hidden_size=32,
-        f_res_n_hidden=3,
-        f_dense_out_hidden_size=32,
-        f_block_repetitions=7,
-        g_layers_sizes=[32, 16, 8],
-        h_dense_hidden_size=32,
-        h_res_hidden_size=32,
-        h_res_n_hidden=3,
-        h_dense_out_hidden_size=16,
-        h_block_repetitions=3,
-    ):
-        super().__init__()
+    """
+    Dataset2Vec meta-feature extractor implemented using torch.
+    """
 
-        f_components = [nn.Linear(2, f_dense_hidden_size)]
-        for _ in range(f_block_repetitions):
+    def __init__(self, config: Dataset2VecConfig = Dataset2VecConfig()):
+        super().__init__()
+        self.config = config
+        self.output_size = config.output_size
+        self.__initialize_f(config)
+        self.__initialize_g(config)
+        self.__initialize_h(config)
+
+    def __initialize_f(self, config: Dataset2VecConfig) -> None:
+        f_components: list[nn.Module] = [
+            nn.Linear(2, config.f_dense_hidden_size),
+            config.activation_cls(),
+        ]
+        for _ in range(config.f_block_repetitions):
             f_components.append(
                 ResidualBlock(
-                    input_size=f_dense_hidden_size,
-                    units=f_res_hidden_size,
-                    n_hidden=f_res_n_hidden,
-                    output_size=f_dense_hidden_size,
-                    activation=activation,
+                    input_size=config.f_dense_hidden_size,
+                    hidden_size=config.f_res_hidden_size,
+                    n_layers=config.f_res_n_layers,
+                    output_size=config.f_dense_hidden_size,
+                    activation_cls=config.activation_cls,
                 )
             )
         f_components.append(
-            nn.Linear(f_dense_hidden_size, f_dense_out_hidden_size)
+            nn.Linear(config.f_dense_hidden_size, config.f_out_size)
         )
+        self.f = nn.Sequential(*f_components)
 
-        g_components = [nn.Linear(f_dense_out_hidden_size, g_layers_sizes[0])]
+    def __initialize_g(self, config: Dataset2VecConfig) -> None:
+        g_components: list[nn.Module] = [
+            nn.Linear(config.f_out_size, config.g_layers_sizes[0]),
+            config.activation_cls(),
+        ]
         for previous_layer_size, layer_size in zip(
-            g_layers_sizes[:-1], g_layers_sizes[1:]
+            config.g_layers_sizes[:-1], config.g_layers_sizes[1:]
         ):
             g_components.append(nn.Linear(previous_layer_size, layer_size))
-            g_components.append(activation)
+            g_components.append(config.activation_cls())
+        self.g = nn.Sequential(*g_components)
 
-        h_components = [nn.Linear(g_layers_sizes[-1], h_dense_hidden_size)]
-        for _ in range(h_block_repetitions):
+    def __initialize_h(self, config: Dataset2VecConfig) -> None:
+        h_components: list[nn.Module] = [
+            nn.Linear(config.g_layers_sizes[-1], config.h_dense_hidden_size),
+            config.activation_cls(),
+        ]
+        for _ in range(config.h_block_repetitions):
             h_components.append(
                 ResidualBlock(
-                    input_size=h_dense_hidden_size,
-                    units=h_res_hidden_size,
-                    n_hidden=h_res_n_hidden,
-                    output_size=h_dense_hidden_size,
-                    activation=activation,
+                    input_size=config.h_dense_hidden_size,
+                    hidden_size=config.h_res_hidden_size,
+                    n_layers=config.h_res_n_layers,
+                    output_size=config.h_dense_hidden_size,
+                    activation_cls=config.activation_cls,
                 )
             )
         h_components.append(
-            nn.Linear(h_dense_hidden_size, h_dense_out_hidden_size)
+            nn.Linear(config.h_dense_hidden_size, config.output_size)
         )
 
-        self.f = nn.Sequential(*f_components)
-        self.g = nn.Sequential(*g_components)
         self.h = nn.Sequential(*h_components)
 
-    def forward(self, X, y, *args, **kwargs):
+    def forward(
+        self,
+        X: Tensor,
+        y: Tensor,
+    ) -> Any:
+        """
+        Generates encoding of the dataset. The size of the output does not
+        depend on the dimensionality of the data. The formula for the encoding
+        is the following:
+        \begin{equation*}
+        \varphi(x) =
+            h\left(
+                \frac{1}{|M||T|}\sum_{m \in M, t \in T}
+                g\left(
+                    \frac{1}{N}\sum_{i=1, \dots, N}f(X_{i, m}, y_{i, t})
+                \right)
+            \right)
+        \end{equation*}
+
+        Args:
+            X (Tensor): Feautre matrix
+            y (Tensor): Targets matrix
+
+        Returns:
+            Tensor: Encoding of the input dataset with
+                output_size dimensionality
+        """
+        assert (
+            X.shape[0] == y.shape[0]
+        ), "X and y must have the same dimensionality"
+        feature_target_pairs = self.__generate_feature_target_pairs(X, y)
+        observation_interdependency_encoding = (
+            self.__generate_interdependency_encoding(feature_target_pairs)
+        )
+        joint_distributions_encodings = (
+            self.__generate_joint_distributions_encoding(
+                observation_interdependency_encoding
+            )
+        )
+        return self.__generate_dataset_encoding(joint_distributions_encodings)
+
+    def __generate_feature_target_pairs(
+        self,
+        X: Tensor,
+        y: Tensor,
+    ) -> Tensor:
+        """
+        Generates feature-target pairs which are required
+        to Dataset2Vec inference.
+
+        Args:
+            X (Tensor): Tensor with features
+                with shape (n_observations, n_features)
+            y (Tensor): Tensor with targets
+                with shape (n_observations, n_targets)
+
+        Returns:
+            Tensor: Generated pairs of feature-target
+                with shape (n_features*n_targets, n_observations, 2)
+                where each tuple contains a pair (feature, target) of
+                corresponding observation e. g. out[0, 1] contains
+                a tuple of the 0-th feature and the 0-th target
+                of the first observation.
+        """
         X_proc = X.T.repeat_interleave(y.shape[1], dim=0)
         y_proc = y.T.repeat(X.shape[1], 1)
-        concatenated = torch.stack((X_proc, y_proc), 2)
+        return stack((X_proc, y_proc), 2)
 
-        feat_target_means = self.f(concatenated).mean(dim=1)
-        mean_from_all_feat_targets = self.g(feat_target_means).mean(dim=0)
-        final_representation = self.h(mean_from_all_feat_targets)
-        return final_representation
+    def __generate_interdependency_encoding(
+        self, feature_target_pairs: Tensor
+    ) -> Tensor:
+        return mean(self.f(feature_target_pairs), dim=1)
+
+    def __generate_joint_distributions_encoding(
+        self, observation_interdependency_encoding: Tensor
+    ) -> Tensor:
+        return mean(self.g(observation_interdependency_encoding), dim=0)
+
+    def __generate_dataset_encoding(
+        self, joint_distributions_encodings: Tensor
+    ) -> Any:
+        return self.h(joint_distributions_encodings)
 
 
 class FeedForward(nn.Module):
-    def __init__(self, input_size, units, n_hidden, output_size, activation):
+    """
+    Simple MLP network.
+    """
+
+    def __init__(
+        self,
+        input_size: int,
+        hidden_size: int,
+        n_layers: int,
+        output_size: int,
+        activation_cls: Type[nn.Module],
+    ):
+        """
+        Args:
+            input_size (int): dimensionality of the input.
+            hidden_size (int): the size of the hidden layer.
+            n_layers (int): number of all the layers of the network.
+            output_size (int): dimensionality of the output.
+            activation_cls (Type[nn.Module]): class of the
+                activation function nn module.
+        """
         super().__init__()
+        assert n_layers >= 1, "Network must have at least one layer"
 
         self.input_size = input_size
-        self.units = units
-        self.n_hidden = n_hidden
+        self.hidden_size = hidden_size
+        self.n_layers = n_layers
         self.output_size = output_size
-        self.activation = activation
+        self.activation_cls = activation_cls
 
-        components = [nn.Linear(self.input_size, self.units), activation]
-        for _ in range(self.n_hidden - 1):
-            components.append(nn.Linear(self.units, self.units))
-            components.append(self.activation)
-        components.append(nn.Linear(self.units, self.output_size))
-        components.append(activation)
+        if n_layers == 1:
+            self.__init_single_layer()
+        else:
+            self.__init_multiple_layers()
 
+    def __init_single_layer(self) -> None:
+        self.block = nn.Sequential(
+            nn.Linear(self.input_size, self.output_size), self.activation_cls()
+        )
+
+    def __init_multiple_layers(self) -> None:
+        components = [
+            nn.Linear(self.input_size, self.hidden_size),
+            self.activation_cls(),
+        ]
+        for _ in range(self.n_layers - 2):
+            components.append(nn.Linear(self.hidden_size, self.hidden_size))
+            components.append(self.activation_cls())
+        components.append(nn.Linear(self.hidden_size, self.output_size))
+        components.append(self.activation_cls())
         self.block = nn.Sequential(*components)
 
-    def forward(self, X, *args, **kwargs):
+    def forward(self, X: Tensor) -> Any:
         return self.block(X)
 
 
 class ResidualBlock(FeedForward):
-    def __init__(self, input_size, units, n_hidden, output_size, activation):
-        super().__init__(input_size, units, n_hidden, output_size, activation)
+    """
+    MLP network with skip-connection from input to output.
+    The constructor takes the same arguments as FeedForward.
+    """
 
-    def forward(self, X, *args, **kwargs):
+    def forward(self, X: Tensor) -> Any:
         return X + super().forward(X)
