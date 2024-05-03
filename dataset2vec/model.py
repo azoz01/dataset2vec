@@ -1,5 +1,7 @@
-from torch import mean, nn, stack, Tensor
 from typing import Any, Type
+
+from torch import Tensor, mean, nn, stack
+
 from dataset2vec.config import Dataset2VecConfig
 
 

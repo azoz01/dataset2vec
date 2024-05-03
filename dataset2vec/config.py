@@ -1,9 +1,10 @@
+from typing import Annotated, Type
+
 from pydantic import BaseModel, Field
 from pydantic.functional_validators import AfterValidator
 from torch import nn
-from typing import Annotated, Type
 
-from dataset2vec.utils import all_elements_positive, non_empty, is_positive
+from dataset2vec.utils import all_elements_positive, is_positive, non_empty
 
 
 class Dataset2VecConfig(BaseModel):

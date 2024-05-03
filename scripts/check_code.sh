@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+echo "Running isort"
+isort --profile=black --line-length=79 dataset2vec/ test/
+
 echo "Running black"
 black --line-length=79 dataset2vec/ test/
 

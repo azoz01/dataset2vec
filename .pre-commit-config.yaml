@@ -9,7 +9,7 @@ repos:
         pass_filenames: false
       - id: run_tests
         name: run_tests
-        entry: bash -c 'pytest'
+        entry: bash -c 'PYTHONPATH=`pwd` pytest'
         language: system
         types: [python]
         pass_filenames: false

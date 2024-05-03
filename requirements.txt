@@ -5,10 +5,10 @@ pandas==2.2.2
 scikit-learn==1.4.2
 pytorch-lightning==2.2.3
 # Code checks
-autodoc_pydantic==2.2.0
 pre-commit==3.7.0
 black==24.4.2
 flake8==7.0.0
+isort==5.13.2
 mypy==1.10.0
 pytest==8.1.2
 torchtest==0.5

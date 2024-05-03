@@ -1,7 +1,7 @@
-import pytest
-
-from torch import nn, Tensor
 from typing import Any, Type
+
+import pytest
+from torch import Tensor, nn
 
 from dataset2vec.model import Dataset2Vec
 

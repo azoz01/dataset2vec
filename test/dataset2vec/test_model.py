@@ -1,9 +1,9 @@
-import pytest
-
-from torch import equal, nn, optim, rand, Tensor, Size
-from torchtest import assert_vars_change
-from unittest.mock import Mock, patch
 from typing import Any
+from unittest.mock import Mock, patch
+
+import pytest
+from torch import Size, Tensor, equal, nn, optim, rand
+from torchtest import assert_vars_change
 
 from dataset2vec.config import Dataset2VecConfig
 from dataset2vec.model import Dataset2Vec, FeedForward, ResidualBlock
