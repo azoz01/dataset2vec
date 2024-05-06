@@ -3,9 +3,10 @@ from typing import Any, Type
 from torch import Tensor, mean, nn, stack
 
 from dataset2vec.config import Dataset2VecConfig
+from dataset2vec.train import LightningBase
 
 
-class Dataset2Vec(nn.Module):
+class Dataset2Vec(LightningBase):
     """
     Dataset2Vec meta-feature extractor implemented using torch.
     """

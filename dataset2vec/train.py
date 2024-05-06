@@ -58,7 +58,9 @@ class LightningBase(pl.LightningModule, ABC):
             (
                 training_labels
                 == (training_predictions >= 0.5).type(torch.int32)
-            ).mean(),
+            )
+            .type(torch.float32)
+            .mean(),
         )
         self.log(
             "train_loss",
@@ -102,7 +104,9 @@ class LightningBase(pl.LightningModule, ABC):
             (
                 validation_labels
                 == (validation_predictions >= 0.5).type(torch.int32)
-            ).mean(),
+            )
+            .type(torch.float32)
+            .mean(),
         )
         self.log(
             "val_loss",
@@ -129,7 +133,7 @@ class LightningBase(pl.LightningModule, ABC):
                 torch.exp(-self.gamma * torch.norm(emb1 - emb2))
             )
             labels.append(label)
-        return torch.Tensor(labels), torch.concat(similarities)
+        return torch.Tensor(labels), torch.stack(similarities)
 
     def configure_optimizers(self) -> optim.Optimizer:
         return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
