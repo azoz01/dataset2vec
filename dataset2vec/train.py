@@ -56,8 +56,10 @@ class LightningBase(pl.LightningModule, ABC):
         self.log(
             "train_accuracy",
             (
-                training_labels
-                == (training_predictions >= 0.5).type(torch.int32)
+                training_labels.to(self.device)
+                == (training_predictions >= 0.5)
+                .type(torch.int32)
+                .to(self.device)
             )
             .type(torch.float32)
             .mean(),
@@ -102,8 +104,10 @@ class LightningBase(pl.LightningModule, ABC):
         self.log(
             "val_accuracy",
             (
-                validation_labels
-                == (validation_predictions >= 0.5).type(torch.int32)
+                validation_labels.to(self.device)
+                == (validation_predictions >= 0.5)
+                .type(torch.int32)
+                .to(self.device)
             )
             .type(torch.float32)
             .mean(),

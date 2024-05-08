@@ -126,10 +126,7 @@ class Dataset2VecLoader:
 
     def __convert_numpy_to_torch(self, data: NDArray[np.generic]) -> Tensor:
         if isinstance(data, np.ndarray):
-            if np.issubdtype(data.dtype, np.integer):
-                data_converted = from_numpy(data).type(torch.long)
-            else:
-                data_converted = from_numpy(data).type(torch.float)
+            data_converted = from_numpy(data).type(torch.float)
             return data_converted
         else:
             raise InvalidDataTypeException(

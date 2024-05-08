@@ -213,19 +213,6 @@ def test__convert_numpy_to_torch_when_float_array_passed() -> None:
     assert (output.numpy() == arr.astype(np.float32)).all()
 
 
-def test__convert_numpy_to_torch_when_int_array_passed() -> None:
-    # Given
-    arr = np.random.randint(0, 10, size=(10, 2))
-    loader = Dataset2VecLoader([])
-
-    # When
-    output = loader._Dataset2VecLoader__convert_numpy_to_torch(arr)  # type: ignore # noqa: E501
-
-    # Then
-    assert output.dtype == torch.long
-    assert (output.numpy() == arr.astype(np.float32)).all()
-
-
 @patch("pandas.read_csv")
 @patch("sklearn.pipeline.Pipeline.fit_transform")
 def test__read_data_if_needed_when_path_list_passed(
