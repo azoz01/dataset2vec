@@ -8,79 +8,124 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from torch import Tensor
 
 
-def get_preprocessing_pipeline() -> BaseEstimator:
-    cat_pipeline = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            (
-                "one-hot",
-                OneHotEncoder(sparse_output=False, handle_unknown="ignore"),
-            ),
-        ]
-    ).set_output(transform="pandas")
+class DataUtils:
 
-    num_pipeline = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="mean")),
-            ("scaler", StandardScaler()),
-        ]
-    ).set_output(transform="pandas")
+    @staticmethod
+    def get_preprocessing_pipeline() -> BaseEstimator:
+        """
+        Returns sklearn preprocessing pipeline for the data which:
+            * Imputes and standardizes numerical columns
+            * Imputes and one-hot encodes categorical columns
 
-    pipeline = Pipeline(
-        [
-            (
-                "transformers",
-                make_column_transformer(
-                    (
-                        cat_pipeline,
-                        make_column_selector(
-                            dtype_include=("object", "category")
-                        ),
-                    ),
-                    (
-                        num_pipeline,
-                        make_column_selector(dtype_include=np.number),
+        Returns:
+            BaseEstimator: preprocessing pipeline in sklearn
+                format
+        """
+        cat_pipeline = Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="most_frequent")),
+                (
+                    "one-hot",
+                    OneHotEncoder(
+                        sparse_output=False, handle_unknown="ignore"
                     ),
                 ),
-            )
-        ]
-    ).set_output(transform="pandas")
-    return pipeline
+            ]
+        ).set_output(transform="pandas")
+
+        num_pipeline = Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="mean")),
+                ("scaler", StandardScaler()),
+            ]
+        ).set_output(transform="pandas")
+
+        pipeline = Pipeline(
+            [
+                (
+                    "transformers",
+                    make_column_transformer(
+                        (
+                            cat_pipeline,
+                            make_column_selector(
+                                dtype_include=("object", "category")
+                            ),
+                        ),
+                        (
+                            num_pipeline,
+                            make_column_selector(dtype_include=np.number),
+                        ),
+                    ),
+                )
+            ]
+        ).set_output(transform="pandas")
+        return pipeline
+
+    @staticmethod
+    def sample_random_subset(
+        a: int | NDArray[np.generic],
+    ) -> NDArray[np.generic]:
+        """
+        Samples random subset with variable length of the given array. When int
+        is passed then samples from the range [0, a - 1]. Subsets are sampled
+        from the uniform distribution.
+
+        Args:
+            a (int | NDArray[np.generic]): Array to sample from.
+                When int is passed the samples from the range [0, a - 1].
+
+        Returns:
+            NDArray[np.generic]: Subsample of the input array.
+        """
+        if isinstance(a, int):
+            a = np.arange(a)
+
+        if len(a) == 1:
+            return a
+        subset_idx = np.random.uniform(size=len(a)) < 0.5
+        if np.sum(subset_idx) == 0:
+            return a
+        return a[subset_idx]
+
+    @staticmethod
+    def index_tensor_using_lists(
+        tensor: Tensor,
+        rows_idx: NDArray[np.generic],
+        col_idx: NDArray[np.generic],
+    ) -> Tensor:
+        """
+        Returns subarray of the input tensor from rows and columns
+        from given indices.
+
+        Args:
+            tensor (Tensor): Tensor to index.
+            rows_idx (NDArray[np.generic]): Index of the rows.
+            col_idx (NDArray[np.generic]): Index of the columns.
+
+        Returns:
+            Tensor: Tensor with specified rows and columns.
+        """
+        return tensor[rows_idx].T[col_idx].T
 
 
-def sample_random_subset(a: int | NDArray[np.generic]) -> NDArray[np.generic]:
-    if isinstance(a, int):
-        a = np.arange(a)
+class Validators:
 
-    if len(a) == 1:
-        return a
-    subset_idx = [np.random.uniform() < 0.5 for _ in a]
-    if np.sum(subset_idx) == 0:
-        return a
-    return a[subset_idx]
+    @staticmethod
+    def is_positive(number: int) -> int:
+        assert number > 0, "Number is non-positive"
+        return number
 
+    @staticmethod
+    def all_elements_positive(arr: list[int]) -> list[int]:
+        assert all(
+            map(lambda x: x > 0, arr)
+        ), "List contains non-positive elements"
+        return arr
 
-def index_tensor_using_lists(
-    tensor: Tensor, rows_idx: NDArray[np.generic], col_idx: NDArray[np.generic]
-) -> Tensor:
-    return tensor[rows_idx].T[col_idx].T
-
-
-def is_positive(number: int) -> int:
-    assert number > 0, "Number is non-positive"
-    return number
-
-
-def all_elements_positive(arr: list[int]) -> list[int]:
-    assert all(
-        map(lambda x: x > 0, arr)
-    ), "List contains non-positive elements"
-    return arr
-
-
-def non_empty(arr: list[int]) -> list[int]:
-    assert len(arr) > 0, "List is empty"
-    return arr
+    @staticmethod
+    def non_empty(arr: list[int]) -> list[int]:
+        assert len(arr) > 0, "List is empty"
+        return arr
 
 
 class InvalidDataTypeException(Exception):

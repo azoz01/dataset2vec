@@ -10,7 +10,7 @@ from dataset2vec.data import Dataset2VecLoader, RepeatableDataset2VecLoader
 from dataset2vec.utils import InvalidDataTypeException
 
 
-@patch("dataset2vec.data.sample_random_subset")
+@patch("dataset2vec.data.DataUtils.sample_random_subset")
 @patch("numpy.random.choice")
 def test__sample_batch_idx(
     np_random_choice_mock: Mock, sample_random_subset_mock: Mock

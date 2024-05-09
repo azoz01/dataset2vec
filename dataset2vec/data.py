@@ -10,11 +10,9 @@ from numpy.typing import NDArray
 from torch import Tensor, from_numpy
 
 from dataset2vec.utils import (
+    DataUtils,
     InconsistentTypesException,
     InvalidDataTypeException,
-    get_preprocessing_pipeline,
-    index_tensor_using_lists,
-    sample_random_subset,
 )
 
 
@@ -81,7 +79,10 @@ class Dataset2VecLoader:
             self.__normalize_type_to_pandas(dataset).iloc[:, :-1]
             for dataset in datasets
         ]
-        Xs = [get_preprocessing_pipeline().fit_transform(X).values for X in Xs]
+        Xs = [
+            DataUtils.get_preprocessing_pipeline().fit_transform(X).values
+            for X in Xs
+        ]
         self.Xs = [self.__convert_numpy_to_torch(X) for X in Xs]
 
     def __setup_ys(
@@ -193,8 +194,8 @@ class Dataset2VecLoader:
     ) -> tuple[Tensor, Tensor]:
         X, y = self.Xs[dataset_idx], self.ys[dataset_idx]
         rows_idx, features_idx, targets_idx = self.__sample_batch_idx(X, y)
-        X = index_tensor_using_lists(X, rows_idx, features_idx)
-        y = index_tensor_using_lists(y, rows_idx, targets_idx)
+        X = DataUtils.index_tensor_using_lists(X, rows_idx, features_idx)
+        y = DataUtils.index_tensor_using_lists(y, rows_idx, targets_idx)
         return X, y
 
     def __sample_batch_idx(
@@ -210,8 +211,8 @@ class Dataset2VecLoader:
         q = np.random.choice(np.arange(3, max_q + 1))
         n_rows_to_select = 2**q
         rows_idx = np.random.choice(n_rows, n_rows_to_select)
-        features_idx = sample_random_subset(n_features)
-        targets_idx = sample_random_subset(n_targets)
+        features_idx = DataUtils.sample_random_subset(n_features)
+        targets_idx = DataUtils.sample_random_subset(n_targets)
 
         return rows_idx, features_idx, targets_idx
 

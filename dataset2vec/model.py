@@ -11,8 +11,13 @@ class Dataset2Vec(LightningBase):
     Dataset2Vec meta-feature extractor implemented using torch.
     """
 
-    def __init__(self, config: Dataset2VecConfig = Dataset2VecConfig()):
-        super().__init__()
+    def __init__(  # type: ignore
+        self,
+        config: Dataset2VecConfig = Dataset2VecConfig(),
+        *base_args,
+        **base_kwargs
+    ):
+        super().__init__(*base_args, **base_kwargs)
         self.config = config
         self.output_size = config.output_size
         self.__initialize_f(config)
@@ -102,6 +107,8 @@ class Dataset2Vec(LightningBase):
         assert (
             X.shape[0] == y.shape[0]
         ), "X and y must have the same dimensionality"
+        if len(y.shape) == 1:
+            y = y.reshape(-1, 1)
         feature_target_pairs = self.__generate_feature_target_pairs(X, y)
         observation_interdependency_encoding = (
             self.__generate_interdependency_encoding(feature_target_pairs)

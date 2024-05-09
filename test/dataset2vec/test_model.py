@@ -158,6 +158,30 @@ def test_all_dataset2vec_params_are_trained(
     )
 
 
+def test_forward_passes() -> None:
+    # Given
+    input = rand(20, 5), rand(20, 1)
+    model = Dataset2Vec()
+
+    # When
+    encoding = model(*input)
+
+    # Then
+    assert encoding.shape == Size([16])
+
+
+def test_forward_passes_when_one_dimensional_y() -> None:
+    # Given
+    input = rand(20, 5), rand(20)
+    model = Dataset2Vec()
+
+    # When
+    encoding = model(*input)
+
+    # Then
+    assert encoding.shape == Size([16])
+
+
 def test_forward_returns_encoding_of_the_same_dimensionality() -> None:
     # Given
     input_1 = rand(20, 5), rand(20, 2)

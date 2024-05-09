@@ -3,6 +3,7 @@ import shutil
 import torch
 from pytorch_lightning import Trainer
 
+from dataset2vec.config import OptimizerConfig
 from dataset2vec.data import Dataset2VecLoader, RepeatableDataset2VecLoader
 from dataset2vec.model import Dataset2Vec
 
@@ -27,7 +28,7 @@ def test_dummy_training_does_not_fail() -> None:
         batch_size=4,
         n_batches=2,
     )
-    model = Dataset2Vec()
+    model = Dataset2Vec(optimizer_config=OptimizerConfig(learning_rate=1e-3))
     trainer = Trainer(
         max_epochs=2, log_every_n_steps=1, default_root_dir="test_logs"
     )

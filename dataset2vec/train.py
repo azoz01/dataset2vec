@@ -5,18 +5,28 @@ import pytorch_lightning as pl
 import torch
 from torch import Tensor, optim
 
+from dataset2vec.config import OptimizerConfig
+
 
 class LightningBase(pl.LightningModule, ABC):
+    """
+    Base class for the training using Lightning purposes.
+    """
+
     def __init__(
         self,
-        gamma: float = 1,
-        learning_rate: float = 1e-4,
-        weight_decay: float = 1e-4,
+        optimizer_config: OptimizerConfig = OptimizerConfig(),
     ):
+        """
+        Args:
+            optimizer_config (OptimizerConfig, optional):
+                Config of the optimizer.
+        """
         super().__init__()
-        self.learning_rate = learning_rate
-        self.gamma = gamma
-        self.weight_decay = weight_decay
+        self.gamma = optimizer_config.gamma
+        self.optimizer_cls = optimizer_config.optimizer_cls
+        self.learning_rate = optimizer_config.learning_rate
+        self.weight_decay = optimizer_config.weight_decay
 
         self.save_hyperparameters()
 
@@ -140,4 +150,8 @@ class LightningBase(pl.LightningModule, ABC):
         return torch.Tensor(labels), torch.stack(similarities)
 
     def configure_optimizers(self) -> optim.Optimizer:
-        return torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        return self.optimizer_cls(  # type: ignore
+            self.parameters(),
+            lr=self.learning_rate,
+            weight_decay=self.weight_decay,
+        )
