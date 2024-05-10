@@ -1,5 +1,7 @@
 import shutil
+from typing import Generator
 
+import pytest
 import torch
 from pytorch_lightning import Trainer
 
@@ -8,7 +10,14 @@ from dataset2vec.data import Dataset2VecLoader, RepeatableDataset2VecLoader
 from dataset2vec.model import Dataset2Vec
 
 
-def test_dummy_training_does_not_fail() -> None:
+@pytest.fixture
+def train_output_path() -> Generator[str, None, None]:
+    path = "test_logs"
+    yield path
+    shutil.rmtree(path)
+
+
+def test_dummy_training_does_not_fail(train_output_path: str) -> None:
     # Given
     train_loader = Dataset2VecLoader(
         [
@@ -30,11 +39,8 @@ def test_dummy_training_does_not_fail() -> None:
     )
     model = Dataset2Vec(optimizer_config=OptimizerConfig(learning_rate=1e-3))
     trainer = Trainer(
-        max_epochs=2, log_every_n_steps=1, default_root_dir="test_logs"
+        max_epochs=2, log_every_n_steps=1, default_root_dir=train_output_path
     )
 
     # Then
     trainer.fit(model, train_loader, val_loader)
-
-    # Cleanup
-    shutil.rmtree("test_logs")

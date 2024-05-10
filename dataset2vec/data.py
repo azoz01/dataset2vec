@@ -20,13 +20,30 @@ class Dataset2VecLoader:
     """
     Dataloader responsible for the generation of the
     examples needed for the training of the Dataset2Vec.
-    In each iteration it returns tuple ((X1, y1), (X2, y2), label).
-    X1, X2 are subsets (both in terms of records and columns) of
-    the features matrices of the passed datasets. y1, y2 are subsets
+    In each iteration it returns tuple :math:`(X_1, y_1, X_2, y_2, label)`.
+    :math:`X_1, X_2` are subsets (both in terms of records and columns) of
+    the features matrices of the passed datasets. :math:`y_1, y_2` are subsets
     of the targets of the datasets (as for now it is the last column of
-    the dataset). Label is either 1 when (X1, y1) and  (X2, y2) originate
-    from the same dataset and 0 otherwise. X1, y1, X2, y2 are torch.Tensor.
-    """
+    the dataset). Label is equal to 1 when :math:`(X_1, y_1)`
+    and :math:`(X_2, y_2)` originate from the same dataset and 0 otherwise.
+    :math:`X_1, y_1, X_2, y_2` are ``torch.Tensor``.
+
+    Args:
+        data (Path | list[Path] | list[pd.DataFrame] | list[NDArray] | list[Tensor]):
+            input data to the loader. If Path, then all
+            csv files are read from this directory. If the list of
+            paths then csv files under these paths are read. If
+            pd.DataFrame or np.NDArray, then they are converted
+            to torch.Tensor. During the creation of the loader
+            the data is imputed, standardized and categorical
+            columns are one-hot encoded
+
+        batch_size (int, optional): Number of the observations
+            in the single batch. Defaults to 32.
+
+        n_batches (int, optional): Number of batches that loader
+            can generate. Defaults to 100.
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -40,24 +57,6 @@ class Dataset2VecLoader:
         batch_size: int = 32,
         n_batches: int = 100,
     ):
-        """
-        Args:
-            data (Path
-                |  list[Path]
-                |  list[pd.DataFrame]
-                |  list[NDArray[np.generic]]
-                |  list[Tensor]): input data to the loader. If Path, then all
-                    csv files are read from this directory. If the list of
-                    paths then csv files under these paths are read. If
-                    pd.DataFrame or np.NDArray, then they are converted
-                    to torch.Tensor. During the creation of the loader
-                    the data is imputed, standardized and categorical
-                    columns are one-hot encoded
-            batch_size (int, optional): Number of the observations
-                in the single batch. Defaults to 32.
-            n_batches (int, optional): Number of batches that loader
-                can generate. Defaults to 100.
-        """
         self.data = data
         self.batch_size = batch_size
         self.n_batches = n_batches
@@ -220,9 +219,25 @@ class Dataset2VecLoader:
 class RepeatableDataset2VecLoader:
     """
     Loader with similar interface to Dataset2VecLoader but it
-    returns on each iter call the same data. Useful for the
+    returns on each iter call the same list of batches. Useful for the
     validation and testing purposes.
-    """
+
+    Args:
+        data (Path | list[Path] | list[pd.DataFrame] | list[NDArray] | list[Tensor]):
+            input data to the loader. If Path, then all
+            csv files are read from this directory. If the list of
+            paths then csv files under these paths are read. If
+            pd.DataFrame or np.NDArray, then they are converted
+            to torch.Tensor. During the creation of the loader
+            the data is imputed, standardized and categorical
+            columns are one-hot encoded
+
+        batch_size (int, optional): Number of the observations
+            in the single batch. Defaults to 32.
+
+        n_batches (int, optional): Number of batches that loader
+            can generate. Defaults to 100.
+    """  # noqa: E501
 
     def __init__(
         self,
@@ -236,24 +251,6 @@ class RepeatableDataset2VecLoader:
         batch_size: int = 32,
         n_batches: int = 100,
     ):
-        """
-        Args:
-            data (Path
-                |  list[Path]
-                |  list[pd.DataFrame]
-                |  list[NDArray[np.generic]]
-                |  list[Tensor]): input data to the loader. If Path, then all
-                    csv files are read from this directory. If the list of
-                    paths then csv files under these paths are read. If
-                    pd.DataFrame or np.NDArray, then they are converted
-                    to torch.Tensor. During the creation of the loader
-                    the data is imputed, standardized and categorical
-                    columns are one-hot encoded
-            batch_size (int, optional): Number of the observations
-                in the single batch. Defaults to 32.
-            n_batches (int, optional): Number of batches that loader
-                can generate. Defaults to 100.
-        """
         loader = Dataset2VecLoader(data, batch_size, n_batches)
         self.batches = list(loader)
         self.released_batches_count = 0

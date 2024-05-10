@@ -99,7 +99,9 @@ class DataUtils:
 
         Args:
             tensor (Tensor): Tensor to index.
+
             rows_idx (NDArray[np.generic]): Index of the rows.
+
             col_idx (NDArray[np.generic]): Index of the columns.
 
         Returns:

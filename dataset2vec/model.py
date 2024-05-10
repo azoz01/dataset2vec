@@ -82,27 +82,35 @@ class Dataset2Vec(LightningBase):
         X: Tensor,
         y: Tensor,
     ) -> Any:
-        """
+        r"""
         Generates encoding of the dataset. The size of the output does not
         depend on the dimensionality of the data. The formula for the encoding
         is the following:
-        \begin{equation*}
-        \varphi(x) =
+
+        .. math::
+            \varphi(x) =
             h\left(
                 \frac{1}{|M||T|}\sum_{m \in M, t \in T}
                 g\left(
                     \frac{1}{N}\sum_{i=1, \dots, N}f(X_{i, m}, y_{i, t})
                 \right)
             \right)
-        \end{equation*}
+
+        :math:`f` is the network responsible for the interdependency encoding,
+        :math:`g` creates generates joint distributions representations and
+        :math:`h` generates final encoding of the dataset. :math:`X_{i, m}`
+        and :math:`y_{i, t}` are the :math:`m`-th feature and :math:`t`-th
+        target of the :math:`i`-th observation of the dataset. :math:`M, T` are
+        cardinalities of the features and target columns.
 
         Args:
             X (Tensor): Feautre matrix
+
             y (Tensor): Targets matrix
 
         Returns:
             Tensor: Encoding of the input dataset with
-                output_size dimensionality
+            ``output_size`` dimensionality
         """
         assert (
             X.shape[0] == y.shape[0]
@@ -132,6 +140,7 @@ class Dataset2Vec(LightningBase):
         Args:
             X (Tensor): Tensor with features
                 with shape (n_observations, n_features)
+
             y (Tensor): Tensor with targets
                 with shape (n_observations, n_targets)
 
@@ -179,9 +188,13 @@ class FeedForward(nn.Module):
         """
         Args:
             input_size (int): dimensionality of the input.
+
             hidden_size (int): the size of the hidden layer.
+
             n_layers (int): number of all the layers of the network.
+
             output_size (int): dimensionality of the output.
+
             activation_cls (Type[nn.Module]): class of the
                 activation function nn module.
         """
