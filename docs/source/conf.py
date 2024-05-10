@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 project = "Dataset2Vec"
 copyright = "2024, Antoni Zajko"
 author = "Antoni Zajko"
-release = "1.0.0"
+release = "0.0.1"
 
 extensions = [
     "sphinx.ext.autodoc",
