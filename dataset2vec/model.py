@@ -2,7 +2,7 @@ from typing import Any, Type
 
 from torch import Tensor, mean, nn, stack
 
-from dataset2vec.config import Dataset2VecConfig
+from dataset2vec.config import Dataset2VecConfig, OptimizerConfig
 from dataset2vec.train import LightningBase
 
 
@@ -11,13 +11,12 @@ class Dataset2Vec(LightningBase):
     Dataset2Vec meta-feature extractor implemented using torch.
     """
 
-    def __init__(  # type: ignore
+    def __init__(
         self,
         config: Dataset2VecConfig = Dataset2VecConfig(),
-        *base_args,
-        **base_kwargs
+        optimizer_config: OptimizerConfig = OptimizerConfig(),
     ):
-        super().__init__(*base_args, **base_kwargs)
+        super().__init__(optimizer_config)
         self.config = config
         self.output_size = config.output_size
         self.__initialize_f(config)

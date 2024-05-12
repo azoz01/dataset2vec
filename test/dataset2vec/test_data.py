@@ -264,8 +264,8 @@ def test__setup_xs() -> None:
     # Then
     assert len(loader.Xs) == 1
     assert isinstance(loader.Xs[0], torch.Tensor)
-    assert (loader.Xs[0][:, 2].mean()).abs() <= 1e-6
-    assert (loader.Xs[0][:, 2].std() - 1).abs() <= 1e-1
+    assert (loader.Xs[0][:, 2].max() - 1).abs() <= 1e-6
+    assert (loader.Xs[0][:, 2].min()).abs() <= 1e-1
     assert (loader.Xs[0][:, 0] == torch.Tensor([1, 0, 1, 1, 0, 0, 0, 1])).all()
     assert (loader.Xs[0][:, 1] == torch.Tensor([0, 1, 0, 0, 1, 1, 1, 0])).all()
 

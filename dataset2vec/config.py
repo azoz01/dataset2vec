@@ -64,7 +64,7 @@ class OptimizerConfig(BaseModel):
         1e-4
     )
     """Learning rate."""
-    weight_decay: Annotated[float, AfterValidator(Validators.is_positive)] = (
+    weight_decay: Annotated[float, AfterValidator(Validators.non_negative)] = (
         1e-4
     )
     """Weight decay."""

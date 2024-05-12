@@ -4,7 +4,7 @@ from sklearn.base import BaseEstimator
 from sklearn.compose import make_column_selector, make_column_transformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from torch import Tensor
 
 
@@ -36,7 +36,7 @@ class DataUtils:
         num_pipeline = Pipeline(
             [
                 ("imputer", SimpleImputer(strategy="mean")),
-                ("scaler", StandardScaler()),
+                ("scaler", MinMaxScaler()),
             ]
         ).set_output(transform="pandas")
 
@@ -115,6 +115,11 @@ class Validators:
     @staticmethod
     def is_positive(number: int) -> int:
         assert number > 0, "Number is non-positive"
+        return number
+
+    @staticmethod
+    def non_negative(number: int) -> int:
+        assert number >= 0, "Number is negative"
         return number
 
     @staticmethod

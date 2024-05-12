@@ -19,8 +19,8 @@ def test_preprocessing_pipeline() -> None:
         {
             "pipeline-1__col3_A": [1, 0, 1],
             "pipeline-1__col3_B": [0, 1, 0],
-            "pipeline-2__col1": [-1 * np.sqrt(1.5), 0, 1 * np.sqrt(1.5)],
-            "pipeline-2__col2": [-1 * np.sqrt(1.5), 0, 1 * np.sqrt(1.5)],
+            "pipeline-2__col1": [0, 0.5, 1],
+            "pipeline-2__col2": [0, 0.5, 1],
         }
     )
 
@@ -91,6 +91,23 @@ def test_is_positive_when_improper_input() -> None:
     # Then
     with pytest.raises(AssertionError):
         Validators.is_positive(input)
+
+
+def test_non_negative_when_proper_input() -> None:
+    # Given
+    input = 0
+
+    # Then
+    Validators.non_negative(input)
+
+
+def test_non_negative_when_improper_input() -> None:
+    # Given
+    input = -11
+
+    # Then
+    with pytest.raises(AssertionError):
+        Validators.non_negative(input)
 
 
 def test_all_elements_positive_when_proper_input() -> None:

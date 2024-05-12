@@ -4,6 +4,7 @@ from typing import Any, Mapping
 import pytorch_lightning as pl
 import torch
 from torch import Tensor, optim
+from torch.optim.lr_scheduler import LinearLR
 
 from dataset2vec.config import OptimizerConfig
 
@@ -149,9 +150,21 @@ class LightningBase(pl.LightningModule, ABC):
             labels.append(label)
         return torch.Tensor(labels), torch.stack(similarities)
 
-    def configure_optimizers(self) -> optim.Optimizer:
-        return self.optimizer_cls(  # type: ignore
+    def configure_optimizers(
+        self,
+    ) -> tuple[list[optim.Optimizer], list[dict[str, Any]]]:
+        optimizer = self.optimizer_cls(  # type: ignore
             self.parameters(),
             lr=self.learning_rate,
             weight_decay=self.weight_decay,
         )
+        scheduler = LinearLR(optimizer)
+
+        return [optimizer], [
+            {
+                "scheduler": scheduler,
+                "interval": "epoch",
+                "monitor": "val_accuracy",
+                "frequency": 1,
+            }
+        ]
