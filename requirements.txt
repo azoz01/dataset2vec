@@ -14,3 +14,6 @@ pytest==8.1.2
 torchtest==0.5
 sphinx==7.3.7
 sphinx_rtd_theme==2.0.0
+# Release
+twine==5.1.0
+build==1.2.1

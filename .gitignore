@@ -2,3 +2,5 @@
 .vscode/*
 lightning_logs
 docs/build
+dataset2vec.egg-info
+dist

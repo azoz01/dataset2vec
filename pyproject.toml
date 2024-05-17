@@ -3,10 +3,10 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["datase2vec"]
+include = ["dataset2vec"]
 
 [project]
-name = "datase2vec"
+name = "dataset2vec"
 version = "0.0.1"
 authors = [
   { name="Antoni Zajko", email="antoni.zajko.1@gmail.com" }
