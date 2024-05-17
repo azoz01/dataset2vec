@@ -7,3 +7,9 @@ build:
 
 sphinx:
   configuration: docs/source/conf.py
+
+python:
+  install:
+    - method: pip
+      extra_requirements:
+        - sphinx_rtd_theme==2.0.0
