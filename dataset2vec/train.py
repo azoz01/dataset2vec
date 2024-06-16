@@ -45,7 +45,7 @@ class LightningBase(pl.LightningModule, ABC):
         labels, similarities = (
             self.__extract_labels_and_similarities_from_batch(batch)
         )
-        loss = self.__calculate_loss(labels, similarities)
+        loss = self.calculate_loss(labels, similarities)
         self.log("train_step_loss", loss, prog_bar=True, batch_size=len(batch))
         return {"loss": loss, "predictions": similarities}
 
@@ -77,7 +77,7 @@ class LightningBase(pl.LightningModule, ABC):
         )
         self.log(
             "train_loss",
-            self.__calculate_loss(training_labels, training_predictions),
+            self.calculate_loss(training_labels, training_predictions),
         )
 
     def on_validation_epoch_start(self) -> None:
@@ -90,7 +90,7 @@ class LightningBase(pl.LightningModule, ABC):
         labels, similarities = (
             self.__extract_labels_and_similarities_from_batch(batch)
         )
-        loss = self.__calculate_loss(labels, similarities)
+        loss = self.calculate_loss(labels, similarities)
 
         return {"loss": loss, "predictions": similarities}
 
@@ -125,16 +125,12 @@ class LightningBase(pl.LightningModule, ABC):
         )
         self.log(
             "val_loss",
-            self.__calculate_loss(validation_labels, validation_predictions),
+            self.calculate_loss(validation_labels, validation_predictions),
         )
 
-    def __calculate_loss(self, labels: Tensor, similarities: Tensor) -> Tensor:
-        same_datasets = torch.where(labels == 1)[0]
-        different_datasets = torch.where(labels == 0)[0]
-        return -(
-            torch.log(similarities[same_datasets]).mean()
-            + torch.log(1 - similarities[different_datasets]).mean()
-        )
+    @abstractmethod
+    def calculate_loss(self, labels: Tensor, similarities: Tensor) -> Tensor:
+        pass
 
     def __extract_labels_and_similarities_from_batch(
         self, batch: list[tuple[Tensor, Tensor, Tensor, Tensor, int]]

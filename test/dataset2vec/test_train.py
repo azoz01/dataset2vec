@@ -12,6 +12,14 @@ class DummyLightningBaseSubclass(LightningBase):
     def forward(self, X: Tensor, y: Tensor) -> Tensor:
         return (X.sum() + y.sum()) * torch.ones(4)
 
+    def calculate_loss(self, labels: Tensor, similarities: Tensor) -> Tensor:
+        same_datasets = torch.where(labels == 1)[0]
+        different_datasets = torch.where(labels == 0)[0]
+        return -(
+            torch.log(similarities[same_datasets]).mean()
+            + torch.log(1 - similarities[different_datasets]).mean()
+        )
+
 
 @pytest.fixture
 def sample_batch() -> list[tuple[Tensor, Tensor, Tensor, Tensor, int]]:
@@ -76,14 +84,14 @@ def test__calculate_loss(
     labels, similarities = sample_labels_similarities
 
     # When
-    loss = model._LightningBase__calculate_loss(labels, similarities)
+    loss = model.calculate_loss(labels, similarities)
 
     # Then
     assert torch.isclose(loss, sample_loss).all()
 
 
 @patch("dataset2vec.train.LightningBase.log")
-@patch("dataset2vec.train.LightningBase._LightningBase__calculate_loss")
+@patch(__name__ + ".DummyLightningBaseSubclass.calculate_loss")
 def test_on_validation_epoch_end(
     calculate_loss_mock: Mock, log_mock: Mock
 ) -> None:
@@ -97,7 +105,7 @@ def test_on_validation_epoch_end(
             torch.isclose(labels, Tensor([0, 1, 1, 0])).all()
             and torch.isclose(predictions, Tensor([0.6, 0.4, 0.8, 0.2])).all()
         ):
-            return Tensor([1])
+            return torch.tensor(1)
         else:
             raise ValueError("Unexpected arguments to calculate_loss_mock")
 
@@ -110,7 +118,7 @@ def test_on_validation_epoch_end(
     log_mock.assert_any_call("val_accuracy", Tensor([0.5]))
     log_mock.assert_any_call(
         "val_loss",
-        Tensor([1]),
+        torch.tensor(1),
     )
 
 
@@ -166,7 +174,7 @@ def test_on_validation_epoch_start() -> None:
 
 
 @patch("dataset2vec.train.LightningBase.log")
-@patch("dataset2vec.train.LightningBase._LightningBase__calculate_loss")
+@patch(__name__ + ".DummyLightningBaseSubclass.calculate_loss")
 def test_on_train_epoch_end(calculate_loss_mock: Mock, log_mock: Mock) -> None:
     # Given
     model = DummyLightningBaseSubclass()
@@ -178,7 +186,7 @@ def test_on_train_epoch_end(calculate_loss_mock: Mock, log_mock: Mock) -> None:
             torch.isclose(labels, Tensor([0, 1, 1, 0])).all()
             and torch.isclose(predictions, Tensor([0.6, 0.4, 0.8, 0.2])).all()
         ):
-            return Tensor([1])
+            return torch.tensor(1)
         else:
             raise ValueError("Unexpected arguments to calculate_loss_mock")
 
@@ -191,7 +199,7 @@ def test_on_train_epoch_end(calculate_loss_mock: Mock, log_mock: Mock) -> None:
     log_mock.assert_any_call("train_accuracy", Tensor([0.5]))
     log_mock.assert_any_call(
         "train_loss",
-        Tensor([1]),
+        torch.tensor(1),
     )
 
 
@@ -217,7 +225,7 @@ def test_on_train_batch_end(
 
 
 @patch("dataset2vec.train.LightningBase.log")
-@patch("dataset2vec.train.LightningBase._LightningBase__calculate_loss")
+@patch(__name__ + ".DummyLightningBaseSubclass.calculate_loss")
 def test_training_step(
     calculate_loss_mock: Mock,
     log_mock: Mock,
