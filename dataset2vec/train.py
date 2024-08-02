@@ -42,8 +42,8 @@ class LightningBase(pl.LightningModule, ABC):
     def training_step(
         self, batch: list[tuple[Tensor, Tensor, Tensor, Tensor, int]]
     ) -> Mapping[str, Tensor]:
-        labels, similarities = (
-            self.__extract_labels_and_similarities_from_batch(batch)
+        labels, similarities = self.extract_labels_and_similarities_from_batch(
+            batch
         )
         loss = self.calculate_loss(labels, similarities)
         self.log("train_step_loss", loss, prog_bar=True, batch_size=len(batch))
@@ -87,8 +87,8 @@ class LightningBase(pl.LightningModule, ABC):
     def validation_step(
         self, batch: list[tuple[Tensor, Tensor, Tensor, Tensor, int]]
     ) -> Mapping[str, Tensor]:
-        labels, similarities = (
-            self.__extract_labels_and_similarities_from_batch(batch)
+        labels, similarities = self.extract_labels_and_similarities_from_batch(
+            batch
         )
         loss = self.calculate_loss(labels, similarities)
 
@@ -132,7 +132,7 @@ class LightningBase(pl.LightningModule, ABC):
     def calculate_loss(self, labels: Tensor, similarities: Tensor) -> Tensor:
         pass
 
-    def __extract_labels_and_similarities_from_batch(
+    def extract_labels_and_similarities_from_batch(
         self, batch: list[tuple[Tensor, Tensor, Tensor, Tensor, int]]
     ) -> tuple[Tensor, Tensor]:
         similarities = []

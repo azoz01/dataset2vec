@@ -62,10 +62,8 @@ def test__extract_labels_and_similarities_from_batch(
     expected_labels, expected_similarities = sample_labels_similarities
 
     # When
-    labels, similarities = (
-        model._LightningBase__extract_labels_and_similarities_from_batch(
-            sample_batch
-        )
+    labels, similarities = model.extract_labels_and_similarities_from_batch(
+        sample_batch
     )
 
     # Then
